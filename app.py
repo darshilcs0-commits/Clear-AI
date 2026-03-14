@@ -71,12 +71,17 @@ def chat():
     elif 'patwa' in user_msg or 'pata de' in user_msg or 'setting' in user_msg:
         return jsonify({"reply": "aaja aukat me"})
     
-    # AI Reply
+    # AI Reply with Error Handling
     try:
         response = chat_session.send_message(user_msg)
         return jsonify({"reply": response.text})
     except Exception as e:
-        return jsonify({"reply": f"Lo phir hug diya: {str(e)}"})
+        # Agar error 429 (Quota) hai toh ye reply jayega
+        if "429" in str(e):
+            return jsonify({"reply": "Abe thoda saans toh lele! Ek saath itne message bhejega toh Google ki phat jayegi. 1 minute baad try kar, tab tak hila le jaake."})
+        
+        # Kisi aur error ke liye chota message
+        return jsonify({"reply": "Kuch toh locha hua hai, thodi der baad aana."})
 
 if __name__ == '__main__':
     app.run(debug=True)
