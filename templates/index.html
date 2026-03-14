@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear.AI</title>
+    <style>
+        /* Minimalistic Dark Mode UI (Gemini Style) */
+        body {
+            background-color: #131314;
+            color: #e3e3e3;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            padding: 15px 20px;
+            font-size: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .logo { font-size: 24px; color: #8ab4f8; }
+
+        /* Chat Area */
+        .chat-container {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            scrollbar-width: thin;
+            scrollbar-color: #444 #131314;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.5;
+            font-size: 15px;
+            word-wrap: break-word;
+        }
+
+        .bot-message {
+            background-color: #1e1f20;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            color: #e3e3e3;
+        }
+
+        .user-message {
+            background-color: #2b2b2b;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            color: #fff;
+        }
+
+        /* 🚨 DEATHLY HALLOWS ANIMATED LOADER 🚨 */
+        .deathly-hallows-loader {
+            display: none;
+            align-self: flex-start;
+            background-color: #1e1f20;
+            padding: 15px 20px;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            width: fit-content;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .deathly-hallows-icon {
+            font-size: 30px; 
+            color: #8ab4f8; 
+            animation: hallows-pulse 1.5s ease-in-out infinite; 
+        }
+
+        @keyframes hallows-pulse {
+            0% { transform: scale(1); opacity: 0.5; text-shadow: 0 0 5px #8ab4f8; }
+            50% { transform: scale(1.1); opacity: 1; text-shadow: 0 0 15px #8ab4f8; }
+            100% { transform: scale(1); opacity: 0.5; text-shadow: 0 0 5px #8ab4f8; }
+        }
+
+        /* Input Area */
+        .input-container {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            gap: 10px;
+            background-color: #131314;
+            position: sticky;
+            bottom: 0;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 15px 20px;
+            border-radius: 30px;
+            border: 1px solid #444;
+            background-color: #1e1f20;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #8ab4f8;
+        }
+
+        button {
+            background-color: #8ab4f8;
+            color: #000;
+            border: none;
+            border-radius: 30px;
+            padding: 0 25px;
+            font-weight: 500;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover { 
+            background-color: #c2e7ff; 
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 12px;
+            color: #9aa0a6;
+            border-top: 1px solid #333;
+            background-color: #131314;
+        }
+        .footer a { color: #8ab4f8; text-decoration: none; }
+        .footer p { margin: 4px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span class="logo">◬</span> Clear.AI
+    </div>
+
+    <div class="chat-container" id="chat-box">
+        <div class="message bot-message">Hey I am Clear, jo uski aur tumhari misunderstandings ni ho payi</div>
+        
+        <div class="deathly-hallows-loader" id="loading-indicator">
+            <span class="deathly-hallows-icon">◬</span>
+        </div>
+    </div>
+    
+    <div class="input-container">
+        <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" onkeypress="handleKeyPress(event)">
+        <button onclick="processInput()">Send</button>
+    </div>
+
+    <div class="footer">
+        <p>Instagram: <a href="https://instagram.com/darshilsharma.18" target="_blank">@darshilsharma.18</a> | X: <a href="https://twitter.com/darshilcs0" target="_blank">@darshilcs0</a></p>
+        <p><i>"agar kuch nayi backchodi hai dimag me toh DM me idea de sakte ho"</i></p>
+    </div>
+
+    <script>
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                processInput();
+            }
+        }
+
+        function appendMessage(text, sender) {
+            const chatBox = document.getElementById('chat-box');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}-message`;
+            msgDiv.innerHTML = text;
+            
+            chatBox.insertBefore(msgDiv, loadingIndicator);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const chatBox = document.getElementById('chat-box');
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function showLoading() {
+            const loadingContainer = document.getElementById('loading-indicator');
+            loadingContainer.style.display = 'flex'; 
+            scrollToBottom();
+        }
+
+        function hideLoading() {
+            const loadingContainer = document.getElementById('loading-indicator');
+            loadingContainer.style.display = 'none'; 
+        }
+
+        async function processInput() {
+            const inputField = document.getElementById('user-input');
+            const rawText = inputField.value.trim();
+            
+            if (!rawText) return;
+
+            // 1. Show User Message
+            appendMessage(rawText, 'user');
+            inputField.value = '';
+
+            // 2. Direct AI API Call (Naam wala logic khatam)
+            showLoading(); 
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: rawText })
+                });
+                
+                const data = await response.json();
+                hideLoading(); 
+                appendMessage(data.reply, 'bot');
+                
+            } catch (error) {
+                hideLoading();
+                appendMessage("Abe tera Python server band pada hai. Check karle.", 'bot');
+            }
+        }
+    </script>
+</body>
+</html>
