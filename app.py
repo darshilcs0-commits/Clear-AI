@@ -78,7 +78,7 @@ def chat():
     except Exception as e:
         # Agar error 429 (Quota) hai toh ye reply jayega
         if "429" in str(e):
-            return jsonify({"reply": "Abe thoda saans toh lele! Ek saath itne message bhejega toh Google ki phat jayegi. 1 minute baad try kar, tab tak hila le jaake."})
+            return jsonify({"reply": "Abeyy system crash hogaya!! rukja Sharmaji ke chore ko phone karne de."})
         
         # Kisi aur error ke liye chota message
         return jsonify({"reply": "Kuch toh locha hua hai, thodi der baad aana."})
