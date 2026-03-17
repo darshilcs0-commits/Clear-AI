@@ -70,6 +70,9 @@
             align-self: flex-end;
             border-bottom-right-radius: 4px;
             color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         /* 🚨 DEATHLY HALLOWS ANIMATED LOADER 🚨 */
@@ -109,6 +112,7 @@
             background-color: #131314;
             position: sticky;
             bottom: 0;
+            align-items: center;
         }
 
         input[type="text"] {
@@ -133,6 +137,7 @@
             border: none;
             border-radius: 30px;
             padding: 0 25px;
+            height: 48px;
             font-weight: 500;
             font-size: 15px;
             cursor: pointer;
@@ -141,6 +146,52 @@
 
         button:hover { 
             background-color: #c2e7ff; 
+        }
+
+        /* NAYA: Upload Button aur Image Preview CSS */
+        .upload-btn {
+            background-color: #1e1f20;
+            border: 1px solid #444;
+            color: #8ab4f8;
+            font-size: 20px;
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            width: 48px;
+        }
+        .upload-btn:hover {
+            background-color: #2b2b2b;
+        }
+
+        .preview-container {
+            display: none;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 0 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .preview-container img {
+            max-height: 80px;
+            border-radius: 10px;
+            border: 2px solid #8ab4f8;
+        }
+        .remove-img-btn {
+            position: absolute;
+            top: -5px;
+            left: 85px;
+            background-color: #ff4d4d;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            padding: 0;
+            line-height: 20px;
+            text-align: center;
         }
 
         /* Footer */
@@ -157,17 +208,16 @@
 
         /* CODE BOX AUR COPY BUTTON STYLING */
         pre {
-            /* Highlight.js apna background dega, isliye hum isko thoda adjust kar rahe hain */
             padding: 35px 0px 0px 0px; 
             border-radius: 8px;
             overflow-x: auto;
             position: relative;
             border: 1px solid #333;
             margin-top: 10px;
-            background-color: #282c34; /* Dark theme background */
+            background-color: #282c34; 
         }
         pre code.hljs {
-            padding: 15px; /* Code ke aas pass jagah */
+            padding: 15px; 
             font-size: 14px;
             font-family: 'Courier New', Courier, monospace;
         }
@@ -212,7 +262,15 @@
         </div>
     </div>
     
+    <div class="preview-container" id="preview-container">
+        <img id="image-preview" src="" alt="preview">
+        <button class="remove-img-btn" onclick="removeImage()">X</button>
+    </div>
+
     <div class="input-container">
+       <input type="file" id="image-input" accept="image/*" capture="environment" style="display: none;" onchange="previewImage(event)">
+        <button class="upload-btn" onclick="document.getElementById('image-input').click()">📷</button>
+
         <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" onkeypress="handleKeyPress(event)">
         <button onclick="processInput()">Send</button>
     </div>
@@ -223,45 +281,81 @@
     </div>
 
     <script>
+        // NAYA: Image store karne ke liye variable
+        let base64Image = null;
+
         function handleKeyPress(e) {
             if (e.key === 'Enter') {
                 processInput();
             }
         }
 
-        function appendMessage(text, sender) {
+        // NAYA: Image select hone pe preview dikhane ke liye
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    base64Image = e.target.result;
+                    document.getElementById('image-preview').src = base64Image;
+                    document.getElementById('preview-container').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // NAYA: Preview se image hatane ke liye
+        function removeImage() {
+            base64Image = null;
+            document.getElementById('image-input').value = "";
+            document.getElementById('preview-container').style.display = 'none';
+        }
+
+        // UPDATE: Text ke sath image bhi chat me dikhane ke liye
+        function appendMessage(text, sender, imgData = null) {
             const chatBox = document.getElementById('chat-box');
             const loadingIndicator = document.getElementById('loading-indicator');
             
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${sender}-message`;
             
-            if (sender === 'bot') {
-                // 1. Markdown ko HTML me badla
-                msgDiv.innerHTML = marked.parse(text); 
-                
-                // 2. NAYA: Har code block pe color wala jaadu lagaya
-                msgDiv.querySelectorAll('pre code').forEach((block) => {
-                    hljs.highlightElement(block);
-                });
-                
-                // 3. Copy button lagaya
-                const preTags = msgDiv.querySelectorAll('pre');
-                preTags.forEach(pre => {
-                    const copyBtn = document.createElement('button');
-                    copyBtn.innerText = 'Copy';
-                    copyBtn.className = 'copy-btn';
+            // Agar user ne photo bheji hai toh chat box me photo dikhao
+            if (sender === 'user' && imgData) {
+                const imgElement = document.createElement('img');
+                imgElement.src = imgData;
+                imgElement.style.maxWidth = '200px';
+                imgElement.style.borderRadius = '10px';
+                msgDiv.appendChild(imgElement);
+            }
+
+            // Agar text bhi hai
+            if (text) {
+                const textDiv = document.createElement('div');
+                if (sender === 'bot') {
+                    textDiv.innerHTML = marked.parse(text); 
                     
-                    copyBtn.onclick = () => {
-                        const codeText = pre.querySelector('code').innerText;
-                        navigator.clipboard.writeText(codeText);
-                        copyBtn.innerText = 'Copied!';
-                        setTimeout(() => copyBtn.innerText = 'Copy', 2000);
-                    };
-                    pre.appendChild(copyBtn);
-                });
-            } else {
-                msgDiv.innerHTML = text;
+                    textDiv.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                    
+                    const preTags = textDiv.querySelectorAll('pre');
+                    preTags.forEach(pre => {
+                        const copyBtn = document.createElement('button');
+                        copyBtn.innerText = 'Copy';
+                        copyBtn.className = 'copy-btn';
+                        
+                        copyBtn.onclick = () => {
+                            const codeText = pre.querySelector('code').innerText;
+                            navigator.clipboard.writeText(codeText);
+                            copyBtn.innerText = 'Copied!';
+                            setTimeout(() => copyBtn.innerText = 'Copy', 2000);
+                        };
+                        pre.appendChild(copyBtn);
+                    });
+                } else {
+                    textDiv.innerText = text;
+                }
+                msgDiv.appendChild(textDiv);
             }
             
             chatBox.insertBefore(msgDiv, loadingIndicator);
@@ -288,11 +382,21 @@
             const inputField = document.getElementById('user-input');
             const rawText = inputField.value.trim();
             
-            if (!rawText) return;
+            // UPDATE: Agar na text hai aur na photo, toh return maro
+            if (!rawText && !base64Image) return;
 
-            // 1. Show User Message
-            appendMessage(rawText, 'user');
+            // 1. Show User Message (Text aur Image dono agar hain)
+            appendMessage(rawText, 'user', base64Image);
+            
+            // Payload banaya backend bhejne ke liye
+            const requestData = { message: rawText };
+            if (base64Image) {
+                requestData.image = base64Image;
+            }
+
+            // Input clear kiya bhejne ke baad
             inputField.value = '';
+            removeImage();
 
             // 2. Direct AI API Call
             showLoading(); 
@@ -302,7 +406,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ message: rawText })
+                    body: JSON.stringify(requestData)
                 });
                 
                 const data = await response.json();
