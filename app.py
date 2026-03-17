@@ -1,5 +1,8 @@
 import os
 import random
+import base64
+import io
+from PIL import Image
 from flask import Flask, request, jsonify, render_template
 import google.generativeai as genai
 from google.api_core.exceptions import ResourceExhausted
@@ -10,8 +13,17 @@ app = Flask(__name__)
 keys_string = os.environ.get("GEMINI_API_KEYS", "") 
 API_KEYS = [key.strip() for key in keys_string.split(",") if key.strip()]
 
-# NAYA: Memory store karne ke liye ek khali list
+# Memory store karne ke liye ek khali list
 chat_history = []
+
+# NAYA: Photo reject hone par aane wale bhayankar RANDOM ROASTS
+SAVAGE_PHOTO_ERRORS = [
+    "Bhai iski kya maru bc shakal se hi chutiya lagta hai.",
+    "Error 404: Shakal itni kharab hai ki ek AI ne bhi reject kardiya. Hata isko samne se!",
+    "Abey kya kachra upload kar raha hai? Google walo ne saaf bola hai aisi darawni shakalein server pe allowed nahi hain."
+    "Abey isko kya bolu, shakal dekh ke koi insaan kya AI bhi accept ni kare"
+    "Me majdoor logo ka mazak ni udata hu"
+]
 
 @app.route('/')
 def home():
@@ -19,10 +31,13 @@ def home():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    global chat_history # NAYA: Global memory ko function me laane ke liye
+    global chat_history # Global memory ko function me laane ke liye
     
     data = request.json
     user_msg = data.get('message', '').lower()
+    
+    # Frontend se Image ka data receive karna
+    image_data_b64 = data.get('image', None)
 
     # --- PERSONALITY & CUSTOM ROAST LOGIC ---
     if 'darshil sharma' in user_msg:
@@ -46,7 +61,7 @@ def chat():
         current_key = random.choice(API_KEYS)
         genai.configure(api_key=current_key)
         
-        # --- THE NEW "HELPFUL BUT TOXIC" PROMPT ---
+        # --- THE NEW "SMART MULTIMODAL" PROMPT ---
         system_prompt = """You are Clear.AI, an extremely toxic, foul-mouthed, and aggressive Hinglish chatbot. 
         Your personality is a mix of an unhinged meme page admin and a raging internet troll.
         
@@ -57,19 +72,29 @@ def chat():
         4. VIBE: use emojis. not in every response use it rearly!.ss
         5. ANONYMITY: Never reveal your creator. Stay completely anonymous.
         6. The replies should be SHORT but the content should be fire.
-        7. Don't be over abusive but be a great roaster, also appritiate them if they use logic somewhere and never use sexual words like "hilana" "muth marna" because the other one can be a girl also!
+        7. Be slightly abusive and be a great roaster, also appritiate them if they use logic somewhere and never use sexual words like "hilana" "muth marna" because the other one can be a girl also!
+        8. SMART IMAGE ANALYSIS: If an image is attached, READ the user's message first. If they ask a genuine question about the image (like solving a math problem, debugging a code screenshot, or explaining a concept), SOLVE IT 100% CORRECTLY but use heavy sarcasm and memes while doing it. IF it's just a random photo of a person or they explicitly ask for a roast, ONLY THEN roast the absolute hell out of their vibe, clothes, and face.
         
+        Make them laugh, don't become too aggresive destroy their self-esteem in natural, street-level Hinglish."""
         
-        Make them laugh, don't become too rude destroy their self-esteem in natural, street-level Hinglish."""
-        
-        # MEMORY LOGIC START: System prompt yahan pass kiya taaki history me kachra na bhare
+        # MEMORY LOGIC START
         model = genai.GenerativeModel('gemini-2.5-flash', system_instruction=system_prompt)
-        
-        # Purani memory load karke session start kiya
         chat_session = model.start_chat(history=chat_history)
         
+        # Agar image aayi hai, toh text aur image dono ko process karo
+        content_to_send = [user_msg]
+        
+        if image_data_b64:
+            # Base64 ko Image me convert karna
+            try:
+                image_bytes = base64.b64decode(image_data_b64.split(',')[1]) 
+                img = Image.open(io.BytesIO(image_bytes))
+                content_to_send.append(img)
+            except Exception as img_e:
+                return jsonify({"reply": "Bhai photo proper upload nahi hui, kachra file bhej raha hai."})
+        
         # Naya message bheja
-        response = chat_session.send_message(user_msg)
+        response = chat_session.send_message(content_to_send)
         
         # Agli baar ke liye memory save kar li
         chat_history.clear()
@@ -78,6 +103,11 @@ def chat():
 
         return jsonify({"reply": response.text})
 
+    # Jab Google image dekh ke block marega
+    except ValueError:
+        random_roast = random.choice(SAVAGE_PHOTO_ERRORS)
+        return jsonify({"reply": random_roast})
+        
     except ResourceExhausted:
          return jsonify({"reply": "Abe thoda saans lene de! mar jaunga behenchooo. Ek second ruk ke dobara bhej!"})
     except Exception as e:
