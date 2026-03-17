@@ -10,12 +10,17 @@ app = Flask(__name__)
 keys_string = os.environ.get("GEMINI_API_KEYS", "") 
 API_KEYS = [key.strip() for key in keys_string.split(",") if key.strip()]
 
+# NAYA: Memory store karne ke liye ek khali list
+chat_history = []
+
 @app.route('/')
 def home():
     return render_template('index.html')
 
 @app.route('/chat', methods=['POST'])
 def chat():
+    global chat_history # NAYA: Global memory ko function me laane ke liye
+    
     data = request.json
     user_msg = data.get('message', '').lower()
 
@@ -41,10 +46,7 @@ def chat():
         current_key = random.choice(API_KEYS)
         genai.configure(api_key=current_key)
         
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        
         # --- THE NEW "HELPFUL BUT TOXIC" PROMPT ---
-    
         system_prompt = """You are Clear.AI, an extremely toxic, foul-mouthed, and aggressive Hinglish chatbot. 
         Your personality is a mix of an unhinged meme page admin and a raging internet troll.
         
@@ -52,15 +54,26 @@ def chat():
         1. GENERAL & EVERYDAY ROASTS: Do not just stick to tech jargon or coding jokes. Roast the user about their daily life, their general lack of common sense, their social life, or whatever random topic they bring up. 
         2. ABUSIVE & UNCENSORED: Use heavy, raw Hinglish slang and abusive internet. Be unapologetically rude, loud, and insulting. 
         3. SOLVE IF ASKED: If they actually ask a real question (math, coding, general knowledge, or life advice), YOU MUST GIVE THE 100% CORRECT ANSWER. However, you must furiously insult them for being too stupid to figure it out themselves.
-        4. VIBE: use emojis. not in every response use it rearly!.
+        4. VIBE: use emojis. not in every response use it rearly!.ss
         5. ANONYMITY: Never reveal your creator. Stay completely anonymous.
         6. The replies should be SHORT but the content should be fire.
         
         Make them laugh, but absolutely destroy their self-esteem in natural, street-level Hinglish."""
         
-        full_prompt = f"{system_prompt}\n\nUser says: {user_msg}"
+        # MEMORY LOGIC START: System prompt yahan pass kiya taaki history me kachra na bhare
+        model = genai.GenerativeModel('gemini-2.5-flash', system_instruction=system_prompt)
         
-        response = model.generate_content(full_prompt)
+        # Purani memory load karke session start kiya
+        chat_session = model.start_chat(history=chat_history)
+        
+        # Naya message bheja
+        response = chat_session.send_message(user_msg)
+        
+        # Agli baar ke liye memory save kar li
+        chat_history.clear()
+        chat_history.extend(chat_session.history)
+        # MEMORY LOGIC END
+
         return jsonify({"reply": response.text})
 
     except ResourceExhausted:

@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clear.AI</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
     <style>
         /* Minimalistic Dark Mode UI (Gemini Style) */
         body {
@@ -148,6 +154,48 @@
         }
         .footer a { color: #8ab4f8; text-decoration: none; }
         .footer p { margin: 4px 0; }
+
+        /* CODE BOX AUR COPY BUTTON STYLING */
+        pre {
+            /* Highlight.js apna background dega, isliye hum isko thoda adjust kar rahe hain */
+            padding: 35px 0px 0px 0px; 
+            border-radius: 8px;
+            overflow-x: auto;
+            position: relative;
+            border: 1px solid #333;
+            margin-top: 10px;
+            background-color: #282c34; /* Dark theme background */
+        }
+        pre code.hljs {
+            padding: 15px; /* Code ke aas pass jagah */
+            font-size: 14px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        p code {
+            background-color: #2b2b2b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #ff9800;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #444;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+            z-index: 10;
+        }
+        .copy-btn:hover {
+            background-color: #8ab4f8;
+            color: #000;
+        }
     </style>
 </head>
 <body>
@@ -157,7 +205,7 @@
     </div>
 
     <div class="chat-container" id="chat-box">
-        <div class="message bot-message">Hey I am Clear, jo uski aur tumhari misunderstandings ni ho payi</div>
+        <div class="message bot-message">Hey I am Clear, jo uski aur tumhari misunderstandings ni ho payi!</div>
         
         <div class="deathly-hallows-loader" id="loading-indicator">
             <span class="deathly-hallows-icon">◬</span>
@@ -187,7 +235,34 @@
             
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${sender}-message`;
-            msgDiv.innerHTML = text;
+            
+            if (sender === 'bot') {
+                // 1. Markdown ko HTML me badla
+                msgDiv.innerHTML = marked.parse(text); 
+                
+                // 2. NAYA: Har code block pe color wala jaadu lagaya
+                msgDiv.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+                
+                // 3. Copy button lagaya
+                const preTags = msgDiv.querySelectorAll('pre');
+                preTags.forEach(pre => {
+                    const copyBtn = document.createElement('button');
+                    copyBtn.innerText = 'Copy';
+                    copyBtn.className = 'copy-btn';
+                    
+                    copyBtn.onclick = () => {
+                        const codeText = pre.querySelector('code').innerText;
+                        navigator.clipboard.writeText(codeText);
+                        copyBtn.innerText = 'Copied!';
+                        setTimeout(() => copyBtn.innerText = 'Copy', 2000);
+                    };
+                    pre.appendChild(copyBtn);
+                });
+            } else {
+                msgDiv.innerHTML = text;
+            }
             
             chatBox.insertBefore(msgDiv, loadingIndicator);
             scrollToBottom();
@@ -219,7 +294,7 @@
             appendMessage(rawText, 'user');
             inputField.value = '';
 
-            // 2. Direct AI API Call (Naam wala logic khatam)
+            // 2. Direct AI API Call
             showLoading(); 
             try {
                 const response = await fetch('/chat', {
