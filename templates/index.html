@@ -255,7 +255,7 @@
     </div>
 
     <div class="chat-container" id="chat-box">
-        <div class="message bot-message">Hey I am Clear, tum bolo toh JEE/NEET bhi karwa duu!</div>
+        <div class="message bot-message" id="welcome-msg"></div>
         
         <div class="deathly-hallows-loader" id="loading-indicator">
             <span class="deathly-hallows-icon">◬</span>
@@ -281,6 +281,25 @@
     </div>
 
     <script>
+    
+        // NAYA: Savage Welcome Messages ki list
+        const savageWelcomes = [
+            "Hey I am Clear, tum bolo toh JEE/NEET bhi karwa duu!",
+            "Aa gaya doubt leke? Padhai toh karni nahi hai, bas AI se homework karwa lo. Bol kya dukh hai tera?",
+            "Bhai teri search history dekh ke mere servers ro rahe hain. Bata kya help chahiye ab?",
+            "Welcome to Clear.AI. Yahan doubts solve hote hain, aur ego destroy. Shoot your question!",
+            "Aayein? Phir aa gaya tu? Chal jaldi puch, mere paas aur nallo ke bhi doubts hain solve karne ke liye.",
+            "Ratan Tata ro denge tera screen time dekh ke. Chal bata kya kaam hai?",
+            "Padhai chhod ke sab karwa lo inse. Haan bol, kya dikkat aa gayi ab?"
+        ];
+
+        // Page load hote hi ek random message dikhane ka function
+        window.onload = function() {
+            const randomMsg = savageWelcomes[Math.floor(Math.random() * savageWelcomes.length)];
+            document.getElementById('welcome-msg').innerText = randomMsg;
+        };
+
+
         // NAYA: Image store karne ke liye variable
         let base64Image = null;
 
