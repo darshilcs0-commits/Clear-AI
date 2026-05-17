@@ -148,7 +148,7 @@
             background-color: #c2e7ff; 
         }
 
-        /* NAYA: Upload Button aur Image Preview CSS */
+        
         .upload-btn {
             background-color: #1e1f20;
             border: 1px solid #444;
@@ -245,6 +245,44 @@
         .copy-btn:hover {
             background-color: #8ab4f8;
             color: #000;
+        }
+        /* Mobile Responsive Design (Phone layout fix) */
+        @media (max-width: 600px) {
+            .header {
+                padding: 10px 15px;
+                font-size: 18px;
+            }
+            .chat-container {
+                padding: 10px 15px;
+            }
+            .message {
+                max-width: 95%; /* Phone me text thoda aur phailne ki jagah di */
+                font-size: 14px;
+                padding: 10px 14px;
+            }
+            .input-container {
+                padding: 10px; /* Padding kam ki taaki buttons pichke na */
+                gap: 5px; /* Buttons aur input ke beech ka gap chota kiya */
+            }
+            .upload-btn {
+                width: 40px; /* Camera button chota kiya */
+                height: 40px;
+                font-size: 18px;
+                padding: 0;
+            }
+            input[type="text"] {
+                padding: 10px 15px; /* Input box ki height adjust ki */
+                font-size: 14px;
+            }
+            button {
+                padding: 0 15px; /* Send button chota kiya */
+                height: 40px;
+                font-size: 14px;
+            }
+            .footer {
+                padding: 10px;
+                font-size: 10px; /* Footer text chota karke line me laya */
+            }
         }
     </style>
 </head>
